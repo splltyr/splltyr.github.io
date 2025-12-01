@@ -412,57 +412,139 @@
         <span id="toast-message">Message sent!</span>
     </div>
 
-    <script>
-        // --- UI UTILITIES (Available Immediately) ---
-        
-        // Mobile Menu Toggle
-        const btn = document.getElementById('mobile-menu-btn');
-        const menu = document.getElementById('mobile-menu');
-        const navbar = document.getElementById('navbar');
+   <script>
+        // Use DOMContentLoaded to ensure all HTML elements are fully parsed before running the script
+        document.addEventListener('DOMContentLoaded', (event) => {
+            
+            // --- UI UTILITIES (Available Immediately) ---
+            
+            // Mobile Menu Toggle
+            const btn = document.getElementById('mobile-menu-btn');
+            const menu = document.getElementById('mobile-menu');
+            const navbar = document.getElementById('navbar');
 
-        if(btn) {
-            btn.addEventListener('click', () => {
-                menu.classList.toggle('hidden');
-            });
-        }
-
-        // Close mobile menu when clicking a link
-        if(menu) {
-            menu.querySelectorAll('a').forEach(link => {
-                link.addEventListener('click', () => {
-                    menu.classList.add('hidden');
+            if(btn) {
+                btn.addEventListener('click', () => {
+                    menu.classList.toggle('hidden');
                 });
-            });
-        }
-
-        // Navbar scroll effect
-        window.addEventListener('scroll', () => {
-            if (window.scrollY > 50) {
-                navbar.classList.add('bg-pinky-900', 'shadow-lg');
-                navbar.classList.remove('bg-pinky-900/95', 'backdrop-blur-sm');
-            } else {
-                navbar.classList.remove('bg-pinky-900', 'shadow-lg');
-                navbar.classList.add('bg-pinky-900/95', 'backdrop-blur-sm');
             }
-        });
 
-        // Toast Function
-        window.showToast = function(message) {
-            const toast = document.getElementById('toast');
-            document.getElementById('toast-message').innerText = message;
-            toast.classList.remove('translate-y-20', 'opacity-0');
-            setTimeout(() => {
-                toast.classList.add('translate-y-20', 'opacity-0');
-            }, 3000);
-        };
+            // Close mobile menu when clicking a link
+            if(menu) {
+                menu.querySelectorAll('a').forEach(link => {
+                    link.addEventListener('click', () => {
+                        menu.classList.add('hidden');
+                    });
+                });
+            }
 
-        // --- CART LOGIC (Client Side) ---
-        window.cart = [];
-        
-        window.addToCart = function(name, price) {
-            window.cart.push({ name, price });
-            updateCartUI();
-            window.showToast(`Added ${name} to order`);
-        };
+            // Navbar scroll effect
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 50) {
+                    navbar.classList.add('bg-pinky-900', 'shadow-lg');
+                    navbar.classList.remove('bg-pinky-900/95', 'backdrop-blur-sm');
+                } else {
+                    navbar.classList.remove('bg-pinky-900', 'shadow-lg');
+                    navbar.classList.add('bg-pinky-900/95', 'backdrop-blur-sm');
+                }
+            });
+
+            // Toast Function
+            window.showToast = function(message) {
+                const toast = document.getElementById('toast');
+                document.getElementById('toast-message').innerText = message;
+                toast.classList.remove('translate-y-20', 'opacity-0');
+                setTimeout(() => {
+                    toast.classList.add('translate-y-20', 'opacity-0');
+                }, 3000);
+            };
+
+            // --- CART LOGIC (Client Side) ---
+            window.cart = [];
+            
+            window.addToCart = function(name, price) {
+                window.cart.push({ name, price });
+                updateCartUI();
+                window.showToast(`Added ${name} to order`);
+            };
+
+            window.removeFromCart = function(index) {
+                window.cart.splice(index, 1);
+                updateCartUI();
+            };
+
+            window.toggleCart = function() {
+                const modal = document.getElementById('cart-modal');
+                modal.classList.toggle('hidden');
+                modal.classList.toggle('flex');
+            };
+
+            function updateCartUI() {
+                const cartCount = document.getElementById('cart-count');
+                const cartItems = document.getElementById('cart-items');
+                const cartTotal = document.getElementById('cart-total');
+                
+                // Ensure elements exist before trying to update them
+                if (!cartCount || !cartItems || !cartTotal) return; 
+
+                // Update Badge
+                cartCount.innerText = window.cart.length;
+                
+                // Render Items
+                cartItems.innerHTML = '';
+                let total = 0;
+
+                if (window.cart.length === 0) {
+                    cartItems.innerHTML = '<p class="text-gray-500 text-center italic">Your cart is empty.</p>';
+                } else {
+                    window.cart.forEach((item, index) => {
+                        total += item.price;
+                        const el = document.createElement('div');
+                        el.className = 'flex justify-between items-center bg-pinky-100 p-2 rounded mb-2';
+                        el.innerHTML = `
+                            <span class="text-pinky-900 font-medium">${item.name}</span>
+                            <div class="flex items-center gap-3">
+                                <span class="text-gray-600">₱${item.price.toFixed(2)}</span>
+                                <button onclick="removeFromCart(${index})" class="text-red-400 hover:text-red-600">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        `;
+                        cartItems.appendChild(el);
+                    });
+                }
+
+                cartTotal.innerText = `₱${total.toFixed(2)}`;
+            }
+            
+            // Call updateCartUI once when the DOM is ready to set initial count/total
+            updateCartUI(); 
+
+            // --- PLACEHOLDER HANDLERS (Until Firebase Loads) ---
+            // These need to be globally available for the Firebase script to link to them
+            window.submitOrderToFirebase = null;
+            window.submitNewsletterToFirebase = null;
+
+            window.submitOrder = async function(e) {
+                e.preventDefault();
+                if (window.submitOrderToFirebase) {
+                    await window.submitOrderToFirebase(e, window.cart);
+                } else {
+                    window.showToast("Database loading... please wait 2 seconds.");
+                }
+            };
+
+            window.handleNewsletter = async function(e) {
+                e.preventDefault();
+                if (window.submitNewsletterToFirebase) {
+                    await window.submitNewsletterToFirebase(e);
+                } else {
+                    window.showToast("Database loading... please wait 2 seconds.");
+                }
+            };
+
+        }); // END DOMContentLoaded
+    </script>
+     
 
         window
